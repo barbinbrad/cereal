@@ -8,14 +8,14 @@ messaging_dir = Dir('messaging')
 
 # Build cereal
 
-schema_files = ['log.capnp', 'state.capnp']
+schema_files = ['log.capnp', 'machine.capnp']
 env.Command(["gen/c/include/c++.capnp.h", "gen/c/include/java.capnp.h"], [], "mkdir -p " + gen_dir.path + "/c/include && touch $TARGETS")
 env.Command([f'gen/cpp/{s}.c++' for s in schema_files] + [f'gen/cpp/{s}.h' for s in schema_files],
             schema_files,
             f"capnpc --src-prefix={cereal_dir.path} $SOURCES -o c++:{gen_dir.path}/cpp/")
 
 if shutil.which('capnpc-java'):
-  env.Command(['gen/java/State.java', 'gen/java/Log.java'],
+  env.Command(['gen/java/Machine.java', 'gen/java/Log.java'],
               schema_files,
               f"capnpc $SOURCES --src-prefix={cereal_dir.path} -o java:{gen_dir.path}/java/")
 

@@ -5,7 +5,7 @@ using Java = import "./include/java.capnp";
 $Java.package("have.some.delicious.cereal");
 $Java.outerClassname("Log");
 
-using State = import "state.capnp";
+using Machine = import "machine.capnp";
 
 @0xf3b1f17e25a4285b;
 
