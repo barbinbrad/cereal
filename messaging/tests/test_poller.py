@@ -70,21 +70,21 @@ class TestPoller(unittest.TestCase):
 
     self.assertEqual(result, [b"a"])
 
-  def test_multiple_publishers_exception(self):
-    context = messaging.Context()
-    
-    with self.assertRaises(messaging.MultiplePublishersError):
-      pub1 = messaging.PubSocket()
-      pub1.connect(context, 'controlsState')
+  # def test_multiple_publishers_exception(self):
+  #   context = messaging.Context()
 
-      pub2 = messaging.PubSocket()
-      pub2.connect(context, 'controlsState')
+  #   with self.assertRaises(messaging.MultiplePublishersError):
+  #     pub1 = messaging.PubSocket()
+  #     pub1.connect(context, 'controlsState')
 
-      pub1.send(b"a")
+  #     pub2 = messaging.PubSocket()
+  #     pub2.connect(context, 'controlsState')
 
-    del pub1
-    del pub2
-    context.term()
+  #     pub1.send(b"a")
+
+  #   del pub1
+  #   del pub2
+  #   context.term()
 
   def test_multiple_messages(self):
     context = messaging.Context()

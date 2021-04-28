@@ -28,7 +28,7 @@ def zmq_sleep(t=1):
   time.sleep(t)
 
 # TODO: this should take any capnp struct and returrn a msg with random populated data
-def random_control_state():
+def random_controls_state():
   fields = ["enabled", "active", "frisky"]
   msg = messaging.new_message("controlsState")
   cs = msg.controlsState
@@ -37,7 +37,7 @@ def random_control_state():
   return msg
 
 # TODO: this should compare any capnp structs
-def assert_controlsstate(cs1, cs2):
+def assert_controls_state(cs1, cs2):
   for f in log.ControlsState.schema.non_union_fields:
     # TODO: check all types
     val1, val2 = getattr(cs1, f), getattr(cs2, f)
@@ -162,12 +162,12 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # no wait and one msg in queue 
-    msg = random_control_state()
+    msg = random_controls_state()
     pub_sock.send(msg.to_bytes())
     time.sleep(0.01)
     recvd = messaging.recv_sock(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_controlsstate(msg.controlsState, recvd.controlsState)
+    assert_controls_state(msg.controlsState, recvd.controlsState)
 
   def test_recv_one(self):
     sock = "controlsState"
@@ -180,11 +180,11 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # one msg in queue 
-    msg = random_control_state()
+    msg = random_controls_state()
     pub_sock.send(msg.to_bytes())
     recvd = messaging.recv_one(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_controlsstate(msg.controlsState, recvd.controlsState)
+    assert_controls_state(msg.controlsState, recvd.controlsState)
 
   def test_recv_one_or_none(self):
     sock = "controlsState"
@@ -197,11 +197,11 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # one msg in queue 
-    msg = random_control_state()
+    msg = random_controls_state()
     pub_sock.send(msg.to_bytes())
     recvd = messaging.recv_one(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_controlsstate(msg.controlsState, recvd.controlsState)
+    assert_controls_state(msg.controlsState, recvd.controlsState)
 
   def test_recv_one_retry(self):
     sock = "controlsState"
@@ -212,13 +212,13 @@ class TestMessaging(unittest.TestCase):
 
     
     # wait 15 socket timeouts before sending
-    msg = random_control_state()
+    msg = random_controls_state()
     delayed_send(sock_timeout*15, pub_sock, msg.to_bytes())
     start_time = time.monotonic()
     recvd = messaging.recv_one_retry(sub_sock)
     self.assertGreaterEqual(time.monotonic() - start_time, sock_timeout*15)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_controlsstate(msg.controlsState, recvd.controlsState)
+    assert_controls_state(msg.controlsState, recvd.controlsState)
 
 if __name__ == "__main__":
   unittest.main()
