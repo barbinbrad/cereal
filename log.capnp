@@ -128,6 +128,7 @@ struct ControlsState @0x97ff69c53601abf1 {
   canMonoTimes @1 :List(UInt64);
   enabled @2 :Bool;
   active @3 :Bool;
+  frisky @4 :Bool;
 }
 
 

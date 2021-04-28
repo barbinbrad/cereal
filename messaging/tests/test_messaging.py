@@ -25,21 +25,20 @@ def random_bytes(length=1000):
   return bytes([random.randrange(0xFF) for _ in range(length)])
 
 def zmq_sleep(t=1):
-  if "ZMQ" in os.environ:
-    time.sleep(t)
+  time.sleep(t)
 
 # TODO: this should take any capnp struct and returrn a msg with random populated data
-def random_carstate():
-  fields = ["vEgo", "aEgo", "gas", "steeringAngleDeg"]
-  msg = messaging.new_message("carState")
-  cs = msg.carState
+def random_control_state():
+  fields = ["enabled", "active", "frisky"]
+  msg = messaging.new_message("controlsState")
+  cs = msg.controlsState
   for f in fields:
-    setattr(cs, f, random.random() * 10)
+    setattr(cs, f, bool(random.getrandbits(1)))
   return msg
 
 # TODO: this should compare any capnp structs
-def assert_carstate(cs1, cs2):
-  for f in car.CarState.schema.non_union_fields:
+def assert_controlsstate(cs1, cs2):
+  for f in log.ControlsState.schema.non_union_fields:
     # TODO: check all types
     val1, val2 = getattr(cs1, f), getattr(cs2, f)
     if isinstance(val1, numbers.Number):
@@ -62,7 +61,6 @@ class TestPubSubSockets(unittest.TestCase):
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, conflate=False, timeout=None)
     zmq_sleep(3)
-
     for _ in range(1000):
       msg = random_bytes()
       pub_sock.send(msg)
@@ -133,7 +131,7 @@ class TestMessaging(unittest.TestCase):
     (messaging.drain_sock_raw, bytes),
   ])
   def test_drain_sock(self, func, expected_type):
-    sock = "carState"
+    sock = "controlsState"
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, timeout=1000)
     zmq_sleep()
@@ -154,7 +152,7 @@ class TestMessaging(unittest.TestCase):
     self.assertEqual(len(msgs), num_msgs)
 
   def test_recv_sock(self):
-    sock = "carState"
+    sock = "controlsState"
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, timeout=100)
     zmq_sleep()
@@ -164,15 +162,15 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # no wait and one msg in queue 
-    msg = random_carstate()
+    msg = random_control_state()
     pub_sock.send(msg.to_bytes())
     time.sleep(0.01)
     recvd = messaging.recv_sock(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_carstate(msg.carState, recvd.carState)
+    assert_controlsstate(msg.controlsState, recvd.controlsState)
 
   def test_recv_one(self):
-    sock = "carState"
+    sock = "controlsState"
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, timeout=1000)
     zmq_sleep()
@@ -182,14 +180,14 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # one msg in queue 
-    msg = random_carstate()
+    msg = random_control_state()
     pub_sock.send(msg.to_bytes())
     recvd = messaging.recv_one(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_carstate(msg.carState, recvd.carState)
+    assert_controlsstate(msg.controlsState, recvd.controlsState)
 
   def test_recv_one_or_none(self):
-    sock = "carState"
+    sock = "controlsState"
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, timeout=1000)
     zmq_sleep()
@@ -199,36 +197,28 @@ class TestMessaging(unittest.TestCase):
     self.assertTrue(recvd is None)
 
     # one msg in queue 
-    msg = random_carstate()
+    msg = random_control_state()
     pub_sock.send(msg.to_bytes())
     recvd = messaging.recv_one(sub_sock)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_carstate(msg.carState, recvd.carState)
+    assert_controlsstate(msg.controlsState, recvd.controlsState)
 
   def test_recv_one_retry(self):
-    sock = "carState"
+    sock = "controlsState"
     sock_timeout = 0.1
     pub_sock = messaging.pub_sock(sock)
     sub_sock = messaging.sub_sock(sock, timeout=sock_timeout*1000)
     zmq_sleep()
 
-    # this test doesn't work with ZMQ since multiprocessing interrupts it
-    if "ZMQ" not in os.environ:
-      # wait 15 socket timeouts and make sure it's still retrying
-      p = multiprocessing.Process(target=messaging.recv_one_retry, args=(sub_sock,))
-      p.start()
-      time.sleep(sock_timeout*15)
-      self.assertTrue(p.is_alive())
-      p.terminate()
-
+    
     # wait 15 socket timeouts before sending
-    msg = random_carstate()
+    msg = random_control_state()
     delayed_send(sock_timeout*15, pub_sock, msg.to_bytes())
     start_time = time.monotonic()
     recvd = messaging.recv_one_retry(sub_sock)
     self.assertGreaterEqual(time.monotonic() - start_time, sock_timeout*15)
     self.assertIsInstance(recvd, capnp._DynamicStructReader)
-    assert_carstate(msg.carState, recvd.carState)
+    assert_controlsstate(msg.controlsState, recvd.controlsState)
 
 if __name__ == "__main__":
   unittest.main()

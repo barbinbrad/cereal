@@ -72,7 +72,7 @@ class TestPoller(unittest.TestCase):
 
   def test_multiple_publishers_exception(self):
     context = messaging.Context()
-
+    
     with self.assertRaises(messaging.MultiplePublishersError):
       pub1 = messaging.PubSocket()
       pub1.connect(context, 'controlsState')

@@ -92,7 +92,7 @@ cdef class SubSocket:
 
   def connect(self, Context context, string endpoint, string address=b"127.0.0.1", bool conflate=False):
     r = self.socket.connect(context.context, endpoint, address, conflate)
-
+    
     if r != 0:
       if errno.errno == errno.EADDRINUSE:
         raise MultiplePublishersError
