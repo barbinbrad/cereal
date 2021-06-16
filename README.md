@@ -1,6 +1,6 @@
 # Cereal
 
-Serial messaging with Cap'n Proto and 0MQ in either Python or C++
+Serial messaging with Cap'n Proto and 0MQ in either Python or C++ based on the code from comma.ai
 
 Example
 ---
